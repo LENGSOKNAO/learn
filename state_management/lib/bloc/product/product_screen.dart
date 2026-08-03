@@ -1,0 +1,102 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:state_management/bloc/product/product_bloc.dart';
+import 'package:state_management/bloc/product/product_event.dart';
+import 'package:state_management/bloc/product/product_state.dart';
+import 'package:state_management/getx/data/api_client.dart';
+import 'package:state_management/getx/data/product_repository.dart';
+
+class BlocProductScreen extends StatelessWidget {
+  const BlocProductScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => ProductBloc(ProductRepository(ApiClient()))..add(FetchProducts()),
+      child: _ProductView(),
+    );
+  }
+}
+
+class _ProductView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<ProductBloc>().state;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('BLoC Products'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => context.read<ProductBloc>().add(FetchProducts()),
+          ),
+        ],
+      ),
+      body: _buildBody(context, state),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, ProductState state) {
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.error.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48),
+            const SizedBox(height: 8),
+            Text(state.error),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: () => context.read<ProductBloc>().add(FetchProducts()),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+    return GridView.builder(
+      padding: const EdgeInsets.all(8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.7,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: state.products.length,
+      itemBuilder: (context, index) {
+        final p = state.products[index];
+        return Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Image.network(p.image, fit: BoxFit.contain),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(p.title,
+                        maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Text('\$${p.price.toStringAsFixed(2)}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

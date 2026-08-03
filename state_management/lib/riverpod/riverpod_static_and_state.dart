@@ -7,9 +7,9 @@ import 'package:flutter_riverpod/legacy.dart';
 final counterProvder = Provider((res) => {0});
 // state provider
 final stateProvider = StateProvider((res) => 0);
-
-class RiverpodStatic extends ConsumerWidget {
-  const RiverpodStatic({super.key});
+// use consumer for don't build don't rebuild
+class RiverpodStaticAndState extends ConsumerWidget {
+  const RiverpodStaticAndState({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
